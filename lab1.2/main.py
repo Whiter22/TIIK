@@ -3,131 +3,104 @@ from collections import Counter
 import numpy as np
 import os
 from math import log2
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 
 def count_entropy(matrix, e_min, e_max, size, name):
     occur = Counter(matrix)
-    p = np.zeros((e_max,), dtype=float)
+    p = np.zeros(e_max, dtype=np.float64)
+    
+    if e_min < 0:
+        p1 = np.zeros(-e_min, dtype=np.float64)
+    
     entropy = 0
 
     #prawdopodobienstwo
     for key in occur.keys():
-        p[key] += (abs(occur[key]) / (size[0]*size[1]))
+        if key < 0:
+            p1[int(key)] += (abs(occur[key]) / (size[0]*size[1]))
+        else:
+            p[int(key)] += (abs(occur[key]) / (size[0]*size[1]))
 
-    for i in range(e_min, e_max):   #log2(0) = -inf
-        if(p[i] == 0):
+    if e_min < 0:
+        p = np.concatenate((p1, p))
+        # print(p.size)
+
+    for i in range(e_min, e_max):   
+        if(p[i] == 0):  #log2(0) = -inf
             continue
 
         entropy += p[i]*log2(p[i])  
 
-    # if name == "lennagrey.bmp":
-    #     x = np.arange(0,e_max)
-    #     plt.plot(x, p)
-    #     plt.title(name)
-    #     plt.show()
+    if name == "lennagrey.bmp":
+        x = np.arange(e_min,e_max)
+        plt.plot(x, p)
+        plt.title(name)
+        plt.grid()
+        # plt.show()
 
     return -entropy
 
-def differential_coding(matrix):
-    rows, cols = matrix.shape
-    result = np.zeros_like(matrix)
 
-    result[0, 0] = matrix[0, 0]
+def differ_matrix(matrix):
+    matrix1 = matrix.astype(np.float64)
 
-    # dla pierwszego wiersza
-    for j in range(1, cols):
-        result[0, j] = matrix[0, j] - matrix[0, j - 1]
+    result = np.zeros_like(matrix1)
 
-    #dla pierwszej kolumny
-    for i in range(1, rows):
-        result[i, 0] = matrix[i, 0] - matrix[i - 1, 0]
+    result[0, 0] = matrix1[0, 0]
+    rows, cols = result.shape
 
-    #dla reszty macierzy
-    for i in range(1, rows):
-        for j in range(1, cols):
-            result[i, j] = matrix[i, j] - matrix[i, j-1]
+    for i in range(rows):
+        for j in range(cols):
+            if i != 0 and j == 0:
+                result[i, j] = matrix1[i, j] - matrix1[i-1, j]
+            else:
+                result[i, j] = matrix1[i, j] - matrix1[i, j-1]
 
     return result
 
 
-def diff_decode(matrix):
-    rows, cols = matrix.shape
-    result = np.zeros_like(matrix)
+def decode(matrix):
+    matrix1 = matrix.astype(np.float64)
 
-    result[0, 0] = matrix[0, 0]
+    result = np.zeros_like(matrix1)
 
-    # Dla pierwszego wiersza
-    for j in range(1, cols):
-        result[0, j] = matrix[0, j] + result[0, j - 1]
+    result[0, 0] = matrix1[0, 0]
+    rows, cols = result.shape
 
-    # Dla pierwszej kolumny
-    for i in range(1, rows):
-        result[i, 0] = matrix[i, 0] + result[i - 1, 0]
-
-    # Dla reszty macierzy
-    for i in range(1, rows):
-        for j in range(1, cols):
-            result[i, j] = matrix[i, j] + result[i, j-1]
+    for i in range(rows):
+        for j in range(cols):
+            if i != 0 and j == 0:
+                result[i, j] = matrix1[i, j] + result[i-1, j]
+            else:
+                result[i, j] = matrix1[i, j] + result[i, j-1]
 
     return result
 
-# def differential_coding(matrix):
-#     rows, cols = matrix.shape
-#     result = np.zeros_like(matrix, dtype=int)
 
-#     result[0, 0] = matrix[0, 0]
+if __name__ == "__main__":
+    dir = "C:/Users/bolec/OneDrive/Pulpit/TIIK/lab1.2/Image2"
+    img_files = [f for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f))]
+    entropies = []
+    entropies_diff = []
 
-#     for i in range(rows):
-#         for j in range(cols):
-#             if i!=0 and j==0:
-#                 result[i, j] = matrix[i, j] - matrix[i-1, j]
-#             else:
-#                 result[i, j] = matrix[i, j] - matrix[i, j-1]
+    for file in img_files:
+        path = os.path.join(dir, file)
+        img = Image.open(path)
+        
+        entropies.append(count_entropy(np.array(img).flatten(), 0, 255, img.size, file))
+        encoded_img = differ_matrix(np.array(img))
+        entropies_diff.append(count_entropy(encoded_img.flatten(), -255, 255, img.size, file))
+        # decoded_img = decode(encoded_img)
 
+        if file == 'lennagrey.bmp':
+            plt.show()
 
-#     return result
+        print(f"File: {file}\t\tentropy:  {round(entropies[len(entropies)-1], 4)}\t\t entropy': {round(entropies_diff[len(entropies_diff)-1], 4)}")
+        # m = np.array(img).astype(np.float64)
+        # if np.array_equal(m, decoded_img):
+        #     print(True)
+        # else:
+        #     print(False)
 
-
-# def diff_decode(matrix):
-#     rows, cols = matrix.shape
-#     result = np.zeros_like(matrix, dtype=int)
-
-#     result[0, 0] = matrix[0, 0]
-
-#     for i in range(rows):
-#         for j in range(cols):
-#             if i != 0 and j == 0:
-#                 result[i, j] = matrix[i, j] + result[i-1, j]
-#             else:
-#                 result[i, j] = matrix[i, j] + result[i, j-1]
-
-
-#     return result
-
-
-dir = "C:/Users/bolec/OneDrive/Pulpit/TIIK/lab1.2/Image2"
-img_files = [f for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f))]
-entropies = []
-entropies_diff = []
-
-for file in img_files:
-    path = os.path.join(dir, file)
-    img = Image.open(path)
-    
-    entropies.append(count_entropy(np.array(img).flatten(), 0, 255, img.size, file))
-    diff_encoded_img = differential_coding(np.array(img))
-    diff_entropy = count_entropy(diff_encoded_img.flatten(), 0, 511, img.size, file)
-
-    decode_img = diff_decode(diff_encoded_img)
-    print(np.array(img), "\n\n\n\n",decode_img)
-    if np.array_equal(np.array(img), decode_img):
-        print(True)
-    else:
-        print(False)
-
-    entropies_diff.append(diff_entropy)
-
-    print(f"File: {file}\t\tentropy:  {entropies[len(entropies)-1]}\t\tentropy differ: {entropies_diff[len(entropies_diff)-1]}")
-
-print(f"\nAverage val: {np.mean(entropies)}")
+    print(f"\nAverage val entropy: {np.mean(entropies)}\nAverage val entropy': {np.mean(entropies_diff)}") 
