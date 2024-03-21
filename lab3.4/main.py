@@ -35,7 +35,7 @@ def count_entropy(matrix, e_min, e_max, size):
 
 left_entropy = []
 right_entropy = []
-dir = "C:/Users/rubin/OneDrive/Pulpit/TIIK/lab3.4/audio"
+dir = "C:/Users/bolec/OneDrive/Pulpit/TIIK/lab3.4/audio"
 audio_files = [f for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f))]
 for file in audio_files:
     audio_data = librosa.load(os.path.join(dir, file), sr=None, mono=False)
@@ -43,11 +43,16 @@ for file in audio_files:
     left_channel = audio_data[0][0]
     right_channel = audio_data[0][1]
     left_channel = np.floor(left_channel * float(2**15) + 0.5)
-    right_channel = np.floor(right_channel * float(2**15) + 0.5)
+    right_channel = np.floor(right_channel * float(2**15) + 0.5)  
 
     print(f"\nAudio data {file}:\nleft channel:\n{left_channel}\nright channel:\n{right_channel}\n\n")
-    left_entropy.append(count_entropy(left_channel, -32768, 32767, len(left_channel)))
-    right_entropy.append(count_entropy(right_channel, -32768, 32767, len(right_channel)))
+
+    l_ent = count_entropy(left_channel, -32768, 32767, len(left_channel))
+    r_ent = count_entropy(right_channel, -32768, 32767, len(right_channel))
+    m = (l_ent + r_ent)/2
+    print(f"Both mean for {file}: {m}\n")
+
+    left_entropy.append(round(l_ent, 4))
+    right_entropy.append(round(r_ent, 4))
 
 print(f"left_entropies:\n{left_entropy}\n\nright_entropies:\n{right_entropy}")
-
