@@ -33,9 +33,35 @@ def count_entropy(matrix, e_min, e_max, size):
     return -entropy
 
 
+def differ_code(channel):
+    channel1 = channel.astype(np.float64)
+    result = np.zeros_like(channel1)
+
+    result[0] = channel1[0]
+
+    for i in range(1, len(channel1)):
+        result[i] = channel1[i] - channel1[i-1]
+
+    return result
+
+
+def decode(channel):
+    channel1 = channel.astype(np.float64)
+    result = np.zeros_like(channel1)
+
+    result[0] = channel1[0]
+
+    for i in range(1, len(channel1)):
+        result[i] = channel1[i] + result[i-1]
+
+    return result    
+
+
 left_entropy = []
 right_entropy = []
-dir = "C:/Users/bolec/OneDrive/Pulpit/TIIK/lab3.4/audio"
+diff_left_ent = []
+diff_right_ent = []
+dir = "C:/Users/rubin/OneDrive/Pulpit/TIIK/lab3.4/audio"
 audio_files = [f for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f))]
 for file in audio_files:
     audio_data = librosa.load(os.path.join(dir, file), sr=None, mono=False)
@@ -55,4 +81,26 @@ for file in audio_files:
     left_entropy.append(round(l_ent, 4))
     right_entropy.append(round(r_ent, 4))
 
-print(f"left_entropies:\n{left_entropy}\n\nright_entropies:\n{right_entropy}")
+    #differ
+    left_encoded = differ_code(left_channel)
+    right_encoded = differ_code(right_channel)
+
+    l_ent = count_entropy(left_encoded, -65536, 65535, len(left_channel))
+    r_ent = count_entropy(right_encoded, -65536, 65535, len(right_channel))
+    m = (l_ent + r_ent)/2
+    print(f"Both mean entropy' for {file}: {m}")
+
+    diff_left_ent.append(round(l_ent, 4))
+    diff_right_ent.append(round(r_ent, 4))
+
+    l_decoded = decode(left_encoded)
+    r_decoded = decode(right_encoded)
+
+    print(f"\nLEFT\nORIGINAL: {left_channel}\nDECODED: {l_decoded}\n\nRIGHT\nORIGINAL: {right_channel}\nDECODED: {r_decoded}")
+
+    if np.array_equal(left_channel, l_decoded) and np.array_equal(right_channel, r_decoded):
+        print("\n\nSAME: TRUE\n-----------------------------------------------------------")
+    else:
+        print("\n\nSAME: FALSE\n-----------------------------------------------------------")
+
+print(f"NOT DIFFER\n\nleft_entropies:\n{left_entropy}\n\nright_entropies:\n{right_entropy}\n\nDIFFER\n\nleft entropy':\n{diff_left_ent}\n\nright entropy':\n{diff_right_ent}")
