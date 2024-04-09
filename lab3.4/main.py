@@ -61,7 +61,9 @@ left_entropy = []
 right_entropy = []
 diff_left_ent = []
 diff_right_ent = []
-dir = "C:/Users/rubin/OneDrive/Pulpit/TIIK/lab3.4/audio"
+mean_t1 = []
+mean_t2 = []
+dir = "C:/Users/bolec/OneDrive/Pulpit/TIIK/lab3.4/audio"
 audio_files = [f for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f))]
 for file in audio_files:
     audio_data = librosa.load(os.path.join(dir, file), sr=None, mono=False)
@@ -71,12 +73,14 @@ for file in audio_files:
     left_channel = np.floor(left_channel * float(2**15) + 0.5)
     right_channel = np.floor(right_channel * float(2**15) + 0.5)  
 
-    print(f"\nAudio data {file}:\nleft channel:\n{left_channel}\nright channel:\n{right_channel}\n\n")
+    # print(f"\nAudio data {file}:\nleft channel:\n{left_channel}\nright channel:\n{right_channel}\n\n")
 
     l_ent = count_entropy(left_channel, -32768, 32767, len(left_channel))
     r_ent = count_entropy(right_channel, -32768, 32767, len(right_channel))
     m = (l_ent + r_ent)/2
-    print(f"Both mean for {file}: {m}\n")
+    # print(f"Both mean for {file}: {m}\n")
+
+    mean_t1.append(round(m, 4))
 
     left_entropy.append(round(l_ent, 4))
     right_entropy.append(round(r_ent, 4))
@@ -88,19 +92,22 @@ for file in audio_files:
     l_ent = count_entropy(left_encoded, -65536, 65535, len(left_channel))
     r_ent = count_entropy(right_encoded, -65536, 65535, len(right_channel))
     m = (l_ent + r_ent)/2
-    print(f"Both mean entropy' for {file}: {m}")
+    # print(f"Both mean entropy' for {file}: {round(m, 5)}")
+
+    mean_t2.append(round(m, 4))
 
     diff_left_ent.append(round(l_ent, 4))
     diff_right_ent.append(round(r_ent, 4))
 
-    l_decoded = decode(left_encoded)
-    r_decoded = decode(right_encoded)
+    # l_decoded = decode(left_encoded)
+    # r_decoded = decode(right_encoded)
 
-    print(f"\nLEFT\nORIGINAL: {left_channel}\nDECODED: {l_decoded}\n\nRIGHT\nORIGINAL: {right_channel}\nDECODED: {r_decoded}")
+    # print(f"\nLEFT\nORIGINAL: {left_channel}\nDECODED: {l_decoded}\n\nRIGHT\nORIGINAL: {right_channel}\nDECODED: {r_decoded}")
 
-    if np.array_equal(left_channel, l_decoded) and np.array_equal(right_channel, r_decoded):
-        print("\n\nSAME: TRUE\n-----------------------------------------------------------")
-    else:
-        print("\n\nSAME: FALSE\n-----------------------------------------------------------")
+    # if np.array_equal(left_channel, l_decoded) and np.array_equal(right_channel, r_decoded):
+    #     print("\n\nSAME: TRUE\n-----------------------------------------------------------")
+    # else:
+    #     print("\n\nSAME: FALSE\n-----------------------------------------------------------")
 
-print(f"NOT DIFFER\n\nleft_entropies:\n{left_entropy}\n\nright_entropies:\n{right_entropy}\n\nDIFFER\n\nleft entropy':\n{diff_left_ent}\n\nright entropy':\n{diff_right_ent}")
+print(f"NOT DIFFER\n\nleft_entropies:\n{left_entropy}\n\nright_entropies:\n{right_entropy}\n\nmean entropies T1:\n{mean_t1}\n\nDIFFER\n\nleft entropy':\n{diff_left_ent}\n\nright entropy':\n{diff_right_ent}\n\nmean entropies T2:\n{mean_t2}")
+print(f"mean 1\n{round(np.mean(left_entropy),4)}\nmean 2\n{round(np.mean(right_entropy),4)}\nmean 3\n{round(np.mean(mean_t1),4)}\nmean 4\n{round(np.mean(diff_left_ent),4)}\nmean 5\n{round(np.mean(diff_right_ent),4)}\nmean 6\n{round(np.mean(mean_t2),4)}")

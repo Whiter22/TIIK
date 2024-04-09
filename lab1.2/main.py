@@ -96,7 +96,8 @@ if __name__ == "__main__":
         if file == 'lennagrey.bmp':
             plt.show()
 
-        print(f"File: {file}\t\tentropy:  {round(entropies[len(entropies)-1], 4)}\t\t entropy': {round(entropies_diff[len(entropies_diff)-1], 4)}")
+        print(f"{file} size: {img.size}")
+        # print(f"File: {file}\t\tentropy:  {round(entropies[len(entropies)-1], 4)}\t\t entropy': {round(entropies_diff[len(entropies_diff)-1], 4)}")
         # m = np.array(img).astype(np.float64)
         # if np.array_equal(m, decoded_img):
         #     print(True)
