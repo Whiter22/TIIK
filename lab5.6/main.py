@@ -14,23 +14,26 @@ f_v = lambda n, k, u: n - (2**k)*u
 
 
 def rice_enc(N, k):
+    v = []
     u = []
     u = [f_u(n, k) for n in N]
 
     if k != 0:
-        v = []
         v = [f_v(ni, k, ui) for ni, ui in zip(N, u)]
+        cnt = 0
 
         for i in range(len(v)):
-            v[i] = str(bin(v[i]))[2:]
-            if len(v[i]) == 1:
-                v[i] = ('0' * 2) + v[i]
-
-            elif len(v[i]) == 2:
-                v[i] = ('0') + v[i]
+            vn = ''
+            while(v[i] != 0 or cnt != k):
+                vn = str(v[i] & 1) + vn
+                v[i] >>= 1
+                cnt += 1  
+            
+            cnt = 0
+            v[i] = vn
     
-    if k == 0:
-        v = [('0' * 2) for _ in range(len(u))]
+    elif k == 0:
+        v = ['' for _ in range(len(u))]
 
     for i in range(len(u)):
         u[i] = '0' * (u[i])
