@@ -48,6 +48,27 @@ def rice_enc(N, k):
     return out
 
 
+def rice_dec(uv_in, k):
+    ans = ''
+    u = 0
+    i = 0
+    while i < len(uv_in):
+        if uv_in[i] != '1':
+            u += 1
+            i += 1
+        
+        else:
+            v = int(uv_in[i+1: i+k+1], 2)
+            i += k+1
+            n = u * 2**k + v
+            ans += '0' * n
+            ans += '1'
+            u = 0
+
+    # print(ans)
+    return ans
+
+
 dir = 'C:/Users/bolec/OneDrive/Pulpit/TIIK/lab5.6/streams'
 streams = [f for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f))]
 OUT = []
@@ -63,6 +84,10 @@ for stream in streams:
     print(f'p(0): {p0}')
     k = int(f_k(p0))
     print(f'k: {k}')
+
+    LR = p1 * (k + 1/(1-p0**(2**k)))
+    E = ((-p0*np.log2(p0) - p1*np.log2(p1))/LR)*100
+    print(f'Efektywnosc: {round(E, 4)}')
 
     counter = 0
     N = []
@@ -81,7 +106,17 @@ for stream in streams:
         for stream in OUT:
             file.write(stream)
 
+
         file.seek(0)
-        print(f'Dlugosc zakodowania = {len(file.read())} bity')
-    # np.savetxt(f'{dir}/{stream}_OUT', OUT, fmt='%s')
-    
+        content1 = file.read()
+        # print(content1)
+        
+        if k != 0:
+            dec =  rice_dec(content1, k)
+        
+            if dec == content:
+                print('Same: True')
+            else:
+                print('Same: False')
+
+        print(f'Dlugosc zakodowania = {len(content1)} bity')
