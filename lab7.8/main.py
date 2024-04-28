@@ -2,6 +2,7 @@ import os
 import librosa
 import numpy as np
 from collections import Counter
+from math import log2
 
 
 f_k = lambda p: np.ceil(np.log2(np.log2(((np.sqrt(5) - 1)/2))/np.log2(p)))
@@ -18,6 +19,7 @@ def prob(channel):
         p = 0.5
 
     return p
+
 
 def rice_enc(N, k):
     v = []
@@ -57,6 +59,28 @@ def rice_enc(N, k):
     return out
 
 
+def decode(uv_in, k):
+    # ans = ''
+    ans = []
+    u = 0
+    i = 0
+    while i < len(uv_in):
+        if uv_in[i] != '1':
+            u += 1
+            i += 1
+        
+        else:
+            v = int(uv_in[i+1: i+k+1], 2)
+            i += k+1
+            n = u * 2**k + v
+            ans.append(n)
+            # ans += '0' * n
+            # ans += '1'
+            u = 0
+    
+    # print(ans) 
+
+
 def differ_code(channel):
     channel1 = channel.astype(np.float64)
     result = np.zeros_like(channel1)
@@ -69,7 +93,36 @@ def differ_code(channel):
     return result
 
 
-dir = "C:/Users/bolec/OneDrive/Pulpit/TIIK/lab7.8/audio"
+def count_entropy(matrix, e_min, e_max, size):
+    occur = Counter(matrix)
+    p = np.zeros(e_max, dtype=np.float64)
+    
+    if e_min < 0:
+        p1 = np.zeros(-e_min, dtype=np.float64)
+    
+    entropy = 0
+
+    #prawdopodobienstwo
+    for key in occur.keys():
+        if key < 0:
+            p1[int(key)] += (abs(occur[key]) / (size))
+        else:
+            p[int(key)] += (abs(occur[key]) / (size))
+
+    if e_min < 0:
+        p = np.concatenate((p1, p))
+        # print(p.size)
+
+    for i in range(e_min, e_max):   
+        if(p[i] == 0):  #log2(0) = -inf
+            continue
+
+        entropy += p[i]*log2(p[i])  
+
+    return -entropy
+
+
+dir = "C:/Users/rubin/OneDrive/Pulpit/TIIK/lab7.8/audio"
 audio_files = [f for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f))]
 for file in audio_files:
     audio_data = librosa.load(os.path.join(dir, file), sr=None, mono=False)
@@ -82,8 +135,11 @@ for file in audio_files:
     left_encoded = differ_code(left_channel)
     right_encoded = differ_code(right_channel)
 
-    print(left_encoded)
-    print(right_encoded)
+    l_ent = count_entropy(left_encoded, -65536, 65535, len(left_channel))
+    r_ent = count_entropy(right_encoded, -65536, 65535, len(right_channel))
+    H_m = (l_ent + r_ent)/2
+    # print(left_encoded)
+    # print(right_encoded)
 
     for i in range(len(left_encoded)):
         if left_encoded[i] >= 0:
@@ -113,10 +169,24 @@ for file in audio_files:
 
     out_r = rice_enc(right_encoded, k_r)
 
-    # print(out_l)
-    print(len(out_l))
-    print(len(out_r))
+    # # print(out_l)
+    # print(len(out_l))
+    # print(len(out_r))
+    print(file)
+    print(f'k_l: {k_l}\nk_r: {k_r}')
     l = len(out_l) + len(out_r)
-    print('coded len: ', l)
+    # print('coded len: ', l)
     LR = l/(len(right_encoded)+len(left_encoded))
     print('LR: ', LR)
+
+    # l_ent = count_entropy(left_encoded, -65536, 65535, len(left_channel))
+    # r_ent = count_entropy(right_encoded, -65536, 65535, len(right_channel))
+    # H_m = (l_ent + r_ent)/2
+
+    E = (H_m/LR) * 100
+    print(f'Efektywnosc: {E}')  
+
+    # print(out_l)
+    # print(round(k_l))
+    # print(left_encoded)
+    # decode(out_l, round(k_l))
